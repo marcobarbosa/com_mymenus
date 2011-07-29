@@ -1,6 +1,6 @@
 <?php
 /**
- * @version		$Id: view.html.php 21395 2011-05-26 18:14:52Z dextercowley $
+ * @version		$Id$
  * @copyright	Copyright (C) 2005 - 2011 Open Source Matters, Inc. All rights reserved.
  * @license		GNU General Public License version 2 or later; see LICENSE.txt
  */
@@ -62,29 +62,29 @@ class MenusViewItem extends JView
 		// If a new item, can save the item.  Allow users with edit permissions to apply changes to prevent returning to grid.
 		if ($isNew && $canDo->get('core.create')) {
 			if ($canDo->get('core.edit')) {
-				JToolBarHelper::apply('item.apply','JTOOLBAR_APPLY');
+				JToolBarHelper::apply('item.apply');
 			}
-			JToolBarHelper::save('item.save', 'JTOOLBAR_SAVE');
+			JToolBarHelper::save('item.save');
 		}
 
 		// If not checked out, can save the item.
 		if (!$isNew && !$checkedOut && $canDo->get('core.edit')) {
-			JToolBarHelper::apply('item.apply','JTOOLBAR_APPLY');
-			JToolBarHelper::save('item.save','JTOOLBAR_SAVE');
+			JToolBarHelper::apply('item.apply');
+			JToolBarHelper::save('item.save');
 		}
 
 		// If the user can create new items, allow them to see Save & New
 		if ($canDo->get('core.create')) {
-			JToolBarHelper::custom('item.save2new', 'save-new.png', 'save-new_f2.png', 'JTOOLBAR_SAVE_AND_NEW', false);
+			JToolBarHelper::save2new('item.save2new');
 		}
 
 		// If an existing item, can save to a copy only if we have create rights.
 		if (!$isNew && $canDo->get('core.create')) {
-			JToolBarHelper::custom('item.save2copy', 'save-copy.png', 'save-copy_f2.png', 'JTOOLBAR_SAVE_AS_COPY', false);
+			JToolBarHelper::save2copy('item.save2copy');
 		}
 
-		if (empty($this->item->id))  {
-			JToolBarHelper::cancel('item.cancel','JTOOLBAR_CANCEL');
+		if ($isNew)  {
+			JToolBarHelper::cancel('item.cancel');
 		} else {
 			JToolBarHelper::cancel('item.cancel', 'JTOOLBAR_CLOSE');
 		}

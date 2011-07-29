@@ -1,6 +1,6 @@
 <?php
 /**
- * @version		$Id: menu.php 21320 2011-05-11 01:01:37Z dextercowley $
+ * @version		$Id$
  * @copyright	Copyright (C) 2005 - 2011 Open Source Matters, Inc. All rights reserved.
  * @license		GNU General Public License version 2 or later; see LICENSE.txt
  */
@@ -263,7 +263,7 @@ class MenusModelMenu extends JModelForm
 
 		foreach ($modules as &$module) {
 			$params = new JRegistry;
-			$params->loadJSON($module->params);
+			$params->loadString($module->params);
 
 			$menuType = $params->get('menutype');
 			if (!isset($result[$menuType])) {
@@ -280,7 +280,7 @@ class MenusModelMenu extends JModelForm
 	 *
 	 * @since	1.6
 	 */
-	function cleanCache() {
+	function cleanCache($group = null, $client_id = 0) {
 		parent::cleanCache('com_modules');
 		parent::cleanCache('mod_menu');
 	}

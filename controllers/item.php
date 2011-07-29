@@ -1,6 +1,6 @@
 <?php
 /**
- * @version		$Id: item.php 21447 2011-06-04 17:39:55Z dextercowley $
+ * @version		$Id$
  * @copyright	Copyright (C) 2005 - 2011 Open Source Matters, Inc. All rights reserved.
  * @license		GNU General Public License version 2 or later; see LICENSE.txt
  */
@@ -149,6 +149,7 @@ class MenusControllerItem extends JControllerForm
 
 			// Reset the ID and then treat the request as for Apply.
 			$data['id']	= 0;
+			$data['associations'] = array();
 			$task		= 'apply';
 		}
 
