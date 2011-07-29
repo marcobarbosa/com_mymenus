@@ -1,0 +1,1 @@
+INSERT INTO `menumanager`.`co7q3_menu_types` (`id`, `menutype`, `title`, `description`) VALUES (NULL, 'adminmenu', 'Admin menu', 'Administrator menus');

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-	<!-- $Id: item.xml 21329 2011-05-11 04:15:59Z eddieajau $ -->
+	<!-- $Id$ -->
 <form>
 	<fieldset>
 		<field
@@ -89,6 +89,22 @@
 			<option
 				value="-2">
 				JTRASHED</option>
+		</field>
+		
+		<field name="client_id" type="list"
+			description="COM_MENUS_FIELD_CLIENT_ID_DESC"
+			label="COM_MENUS_FIELD_CLIENT_ID_LABEL"
+			size="1"
+			default="0"
+			filter="integer"
+			readonly="true">
+		<option
+				value="1">
+				JADMINISTRATOR</option>
+			<option
+				value="0">
+				JSITE</option>
+			
 		</field>
 
 		<field

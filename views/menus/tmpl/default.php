@@ -1,6 +1,6 @@
 <?php
 /**
- * @version		$Id: default.php 21020 2011-03-27 06:52:01Z infograf768 $
+ * @version		$Id$
  * @package		Joomla.Administrator
  * @subpackage	com_menus
  * @copyright	Copyright (C) 2005 - 2011 Open Source Matters, Inc. All rights reserved.
@@ -10,11 +10,12 @@
 defined('_JEXEC') or die;
 
 // Include the component HTML helpers.
-JHtml::addIncludePath(JPATH_COMPONENT.DS.'helpers'.DS.'html');
+JHtml::addIncludePath(JPATH_COMPONENT . '/helpers/html');
+require_once JPATH_ADMINISTRATOR .'/components/com_modules/helpers/modules.php';
 
 // Load the tooltip behavior.
 JHtml::_('behavior.tooltip');
-JHtml::_('script','system/multiselect.js',false,true);
+JHtml::_('behavior.multiselect');
 
 $uri		= JFactory::getUri();
 $return		= base64_encode($uri);
@@ -31,11 +32,19 @@ $listDirn	= $this->escape($this->state->get('list.direction'));
 	}
 </script>
 <form action="<?php echo JRoute::_('index.php?option=com_menus&view=menus');?>" method="post" name="adminForm" id="adminForm">
+	<fieldset id="filter-bar">
+		<div class="filter-select fltrt">
+			<select name="filter_client_id" class="inputbox" onchange="this.form.submit()">
+				<?php echo JHtml::_('select.options', ModulesHelper::getClientOptions(), 'value', 'text', $this->state->get('filter.client_id'));?>
+			</select>
+	</div>
+	</fieldset>
+	<div class="clr"> </div>
 	<table class="adminlist">
 		<thead>
 			<tr>
 				<th width="1%" rowspan="2">
-					<input type="checkbox" name="checkall-toggle" value="" onclick="checkAll(this)" />
+					<input type="checkbox" name="checkall-toggle" value="" title="<?php echo JText::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)" />
 				</th>
 				<th rowspan="2">
 					<?php echo JHtml::_('grid.sort',  'JGLOBAL_TITLE', 'a.title', $listDirn, $listOrder); ?>
@@ -84,7 +93,7 @@ $listDirn	= $this->escape($this->state->get('list.direction'));
 						<?php echo $this->escape($item->title); ?></a>
 					<p class="smallsub">(<span><?php echo JText::_('COM_MENUS_MENU_MENUTYPE_LABEL') ?></span>
 						<?php if ($canEdit) : ?>
-							<?php echo '<a href="'. JRoute::_('index.php?option=com_menus&task=menu.edit&id='.$item->id).' title='.$this->escape($item->description).'">'.
+							<?php echo '<a href="'.JRoute::_('index.php?option=com_menus&task=menu.edit&id='.$item->id).' title='.$this->escape($item->description).'">'.
 							$this->escape($item->menutype).'</a>'; ?>)
 						<?php else : ?>
 							<?php echo $this->escape($item->menutype)?>)
@@ -121,7 +130,7 @@ $listDirn	= $this->escape($this->state->get('list.direction'));
 						endforeach;
 					endif;
 					?>
-					</ul>
+				</ul>
 				</td>
 				<td class="center">
 					<?php echo $item->id; ?>

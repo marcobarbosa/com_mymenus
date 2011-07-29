@@ -1,6 +1,6 @@
 <?php
 /**
- * @version		$Id: item.php 21455 2011-06-05 08:57:54Z infograf768 $
+ * @version		$Id$
  * @copyright	Copyright (C) 2005 - 2011 Open Source Matters, Inc. All rights reserved.
  * @license		GNU General Public License version 2 or later; see LICENSE.txt
  */
@@ -10,6 +10,8 @@ defined('_JEXEC') or die;
 
 // Include dependancies.
 jimport('joomla.application.component.modeladmin');
+jimport('joomla.filesystem.file');
+jimport('joomla.filesystem.folder');
 require_once JPATH_COMPONENT.'/helpers/menus.php';
 
 /**
@@ -550,6 +552,7 @@ class MenusModelItem extends JModelAdmin
 		if (empty($table->id)) {
 			$table->parent_id	= $this->getState('item.parent_id');
 			$table->menutype	= $this->getState('item.menutype');
+			$table->client_id	= ($this->getState('item.menutype') == 'adminmenu') ? 1 : 0;
 			$table->params		= '{}';
 		}
 
@@ -616,7 +619,7 @@ class MenusModelItem extends JModelAdmin
 
 		// Convert the params field to an array.
 		$registry = new JRegistry;
-		$registry->loadJSON($table->params);
+		$registry->loadString($table->params);
 		$result->params = $registry->toArray();
 
 		// Merge the request arguments in to the params for a component.
@@ -638,6 +641,16 @@ class MenusModelItem extends JModelAdmin
 			$args = array();
 			parse_str(parse_url($table->link, PHP_URL_QUERY), $args);
 			$result->params = array_merge($result->params, $args);
+		}
+
+		// Load associated menu items
+		if (JFactory::getApplication()->get('menu_associations', 0)) {
+			if ($pk != null) {
+				$result->associations = MenusHelper::getAssociations($pk);
+			}
+			else {
+				$result->associations = array();
+			}
 		}
 
 		return $result;
@@ -764,8 +777,6 @@ class MenusModelItem extends JModelAdmin
 	 */
 	protected function preprocessForm(JForm $form, $data, $group = 'content')
 	{
-		jimport('joomla.filesystem.file');
-		jimport('joomla.filesystem.folder');
 
 		// Initialise variables.
 		$link = $this->getState('item.link');
@@ -888,6 +899,36 @@ class MenusModelItem extends JModelAdmin
 			throw new Exception(JText::_('JERROR_LOADFILE_FAILED'));
 		}
 
+		// Association menu items
+		if (JFactory::getApplication()->get('menu_associations', 0)) {
+			$languages = JLanguageHelper::getLanguages('lang_code');
+
+			$addform = new JXMLElement('<form />');
+			$fields = $addform->addChild('fields');
+			$fields->addAttribute('name', 'associations');
+			$fieldset = $fields->addChild('fieldset');
+			$fieldset->addAttribute('name', 'item_associations');
+			$fieldset->addAttribute('description', 'COM_MENUS_ITEM_ASSOCIATIONS_FIELDSET_DESC');
+			$add = false;
+			foreach ($languages as $tag => $language)
+			{
+				if ($tag != $data['language']) {
+					$add = true;
+					$field = $fieldset->addChild('field');
+					$field->addAttribute('name', $tag);
+					$field->addAttribute('type', 'menuitem');
+					$field->addAttribute('language', $tag);
+					$field->addAttribute('label',$language->title);
+					$field->addAttribute('translate_label','false');
+					$option = $field->addChild('option', 'COM_MENUS_ITEM_FIELD_ASSOCIATION_NO_VALUE');
+					$option->addAttribute('value','');
+				}
+			}
+			if ($add) {
+				$form->load($addform, false);
+			}
+		}
+
 		// Trigger the default form events.
 		parent::preprocessForm($form, $data);
 	}
@@ -926,7 +967,7 @@ class MenusModelItem extends JModelAdmin
 		foreach ($items as &$item)
 		{
 			$registry = new JRegistry;
-			$registry->loadJSON($item->params);
+			$registry->loadString($item->params);
 			$params = (string)$registry;
 
 			$db->setQuery(
@@ -1009,6 +1050,54 @@ class MenusModelItem extends JModelAdmin
 
 		$this->setState('item.id', $table->id);
 		$this->setState('item.menutype', $table->menutype);
+
+		// Load associated menu items
+		if (JFactory::getApplication()->get('menu_associations', 0)) {
+			// Adding self to the association
+			$associations = $data['associations'];
+			foreach ($associations as $tag=>$id) {
+				if (empty($id)) {
+					unset($associations[$tag]);
+				}
+			}
+
+			// Detecting all item menus
+			$all_language = $table->language == '*';
+			if ($all_language && !empty($associations)) {
+				JError::raiseNotice(403, JText::_('COM_MENUS_ERROR_ALL_LANGUAGE_ASSOCIATED'));
+			}
+
+			$associations[$table->language]=$table->id;
+
+			// Deleting old association for these items
+			$db = JFactory::getDbo();
+			$query = $db->getQuery(true);
+			$query->delete('#__associations');
+			$query->where('context='.$db->quote('com_menus.item'));
+			$query->where('id IN ('.implode(',', $associations).')');
+			$db->setQuery($query);
+			$db->query();
+			if ($error = $db->getErrorMsg()) {
+				$this->setError($error);
+				return false;
+			}
+
+			if (!$all_language && count($associations)>1) {
+				// Adding new association for these items
+				$key = md5(json_encode($associations));
+				$query->clear();
+				$query->insert('#__associations');
+				foreach ($associations as $tag=>$id) {
+					$query->values($id.','.$db->quote('com_menus.item').','.$db->quote($key));
+				}
+				$db->setQuery($query);
+				$db->query();
+				if ($error = $db->getErrorMsg()) {
+					$this->setError($error);
+					return false;
+				}
+			}
+		}
 
 		// Clean the cache
 		$this->cleanCache();
