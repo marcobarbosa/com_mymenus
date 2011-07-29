@@ -1,6 +1,6 @@
 <?php
 /**
- * @version		$Id: menu.php 20228 2011-01-10 00:52:54Z eddieajau $
+ * @version		$Id$
  * @copyright	Copyright (C) 2005 - 2011 Open Source Matters, Inc. All rights reserved.
  * @license		GNU General Public License version 2 or later; see LICENSE.txt
  */
@@ -59,14 +59,14 @@ class MenusControllerMenu extends JControllerForm
 		}
 
 		// Make sure we are not trying to modify an administrator menu.
-		if (isset($data['client_id']) && $data['client_id'] == 1){
+		/*if (isset($data['client_id']) && $data['client_id'] == 1){
 			JError::raiseNotice(0, JText::_('COM_MENUS_MENU_TYPE_NOT_ALLOWED'));
 
 			// Redirect back to the edit screen.
 			$this->setRedirect(JRoute::_('index.php?option=com_menus&view=menu&layout=edit', false));
 
 			return false;
-		}
+		}*/
 
 		// Populate the row id from the session.
 		$data['id'] = $recordId;

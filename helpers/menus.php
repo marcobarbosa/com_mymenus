@@ -1,6 +1,6 @@
 <?php
 /**
- * @version		$Id: menus.php 20196 2011-01-09 02:40:25Z ian $
+ * @version		$Id$
  * @copyright	Copyright (C) 2005 - 2011 Open Source Matters, Inc. All rights reserved.
  * @license		GNU General Public License version 2 or later; see LICENSE.txt
  */
@@ -21,6 +21,8 @@ class MenusHelper
 	 * Defines the valid request variables for the reverse lookup.
 	 */
 	protected static $_filter = array('option', 'view', 'layout');
+	
+	protected static $menus = array();
 
 	/**
 	 * Configure the Linkbar.
@@ -118,12 +120,12 @@ class MenusHelper
 	 * @return		array	The menu array list
 	 * @since		1.6
 	 */
-	public static function getMenuTypes()
+	/*public static function getMenuTypes()
 	{
 		$db = JFactory::getDbo();
 		$db->setQuery('SELECT a.menutype FROM #__menu_types AS a');
 		return $db->loadResultArray();
-	}
+	}*/
 
 	/**
 	 * Get a list of menu links for one or all menus.
@@ -133,7 +135,7 @@ class MenusHelper
 	 * @param	int		An optional mode. If parent ID is set and mode=2, the parent and children are excluded from the list.
 	 * @param	array	An optional array of states
 	 */
-	public static function getMenuLinks($menuType = null, $parentId = 0, $mode = 0, $published=array())
+	public static function getMenuLinks($menuType = null, $parentId = 0, $mode = 0, $published=array(), $languages=array())
 	{
 		$db = JFactory::getDbo();
 		$query = $db->getQuery(true);
@@ -153,6 +155,13 @@ class MenusHelper
 				$query->join('LEFT', '`#__menu` AS p ON p.id = '.(int) $parentId);
 				$query->where('(a.lft <= p.lft OR a.rgt >= p.rgt)');
 			}
+		}
+
+		if (!empty($languages)) {
+			if (is_array($languages)) {
+				$languages = '(' . implode(',', array_map(array($db, 'quote'), $languages)) . ')';
+			}
+			$query->where('a.language IN ' . $languages);
 		}
 
 		if (!empty($published)) {
@@ -218,5 +227,56 @@ class MenusHelper
 		} else {
 			return $links;
 		}
+	}
+	static public function getAssociations($pk)
+	{
+		$associations = array();
+		$db = JFactory::getDbo();
+		$query = $db->getQuery(true);
+		$query->from('#__menu as m');
+		$query->leftJoin('#__associations as a ON a.id=m.id AND a.context='.$db->quote('com_menus.item'));
+		$query->leftJoin('#__associations as a2 ON a.key=a2.key');
+		$query->leftJoin('#__menu as m2 ON a2.id=m2.id');
+		$query->where('m.id='.(int)$pk);
+		$query->select('m2.language, m2.id');
+		$db->setQuery($query);
+		$menuitems = $db->loadObjectList('language');
+		// Check for a database error.
+		if ($error = $db->getErrorMsg()) {
+			JError::raiseWarning(500, $error);
+			return false;
+		}
+		foreach ($menuitems as $tag=>$item) {
+			$associations[$tag] = $item->id;
+		}
+		return $associations;
+	}
+	
+	static public function getMenutypes($clientid = 0) {
+		
+		if (empty(self::$menus[$clientid]))
+		{
+		$db = JFactory::getDbo();
+		$query = $db->getQuery(true);
+		$query->select('DISTINCT b.menutype AS nepravimenutype ,a.menutype As value, a.title As text, a.*');
+		$query->from('`#__menu` AS b');
+		$query->innerJoin('`#__menu_types` AS a ON b.menutype = a.menutype');
+		// copied from ModMenuHelper->getMenus
+		$query->where('(b.client_id = '.(int)$clientid . ' OR b.client_id IS NULL)');
+		$query->group('a.id');
+
+		// Add the list ordering clause.
+		$query->order('a.title');
+		$db->setQuery($query);
+		self::$menus[$clientid] = $db->loadObjectList();
+		}
+		
+	return self::$menus[$clientid];
+	}
+	
+	static public function getMenuOptions($clientid = 0) {
+		$options = self::getMenutypes($clientid);
+		$options = array_merge(array(''=>'- Select Menu Type -'),$options );
+		return $options;
 	}
 }

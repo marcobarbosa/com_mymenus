@@ -1,6 +1,6 @@
 <?php
 /**
- * @version		$Id: view.html.php 21320 2011-05-11 01:01:37Z dextercowley $
+ * @version		$Id$
  * @package		Joomla.Administrator
  * @subpackage	com_menus
  * @copyright	Copyright (C) 2005 - 2011 Open Source Matters, Inc. All rights reserved.
@@ -171,25 +171,25 @@ class MenusViewItems extends JView
 		JToolBarHelper::title(JText::_('COM_MENUS_VIEW_ITEMS_TITLE'), 'menumgr.png');
 
 		if ($canDo->get('core.create')) {
-			JToolBarHelper::custom('item.add', 'new.png', 'new_f2.png','JTOOLBAR_NEW', false);
+			JToolBarHelper::addNew('item.add');
 		}
 		if ($canDo->get('core.edit')) {
-			JToolBarHelper::custom('item.edit', 'edit.png', 'edit_f2.png','JTOOLBAR_EDIT', true);
+			JToolBarHelper::editList('item.edit');
 		}
 		if ($canDo->get('core.edit.state')) {
 			JToolBarHelper::divider();
-			JToolBarHelper::custom('items.publish', 'publish.png', 'publish_f2.png','JTOOLBAR_PUBLISH', true);
-			JToolBarHelper::custom('items.unpublish', 'unpublish.png', 'unpublish_f2.png','JTOOLBAR_UNPUBLISH', true);
+			JToolBarHelper::publish('items.publish', 'JTOOLBAR_PUBLISH', true);
+			JToolBarHelper::unpublish('items.unpublish', 'JTOOLBAR_UNPUBLISH', true);
 		}
 		if (JFactory::getUser()->authorise('core.admin')) {
 			JToolBarHelper::divider();
-			JToolBarHelper::custom('items.checkin', 'checkin.png', 'checkin_f2.png', 'JTOOLBAR_CHECKIN', true);
+			JToolBarHelper::checkin('items.checkin', 'JTOOLBAR_CHECKIN', true);
 		}
 		if ($canDo->get('core.edit.state')) {
-			JToolBarHelper::trash('items.trash','JTOOLBAR_TRASH');
+			JToolBarHelper::trash('items.trash');
 		}
 		if ($this->state->get('filter.published') == -2 && $canDo->get('core.delete')) {
-			JToolBarHelper::deleteList('', 'items.delete','JTOOLBAR_EMPTY_TRASH');
+			JToolBarHelper::deleteList('', 'items.delete', 'JTOOLBAR_EMPTY_TRASH');
 		}
 
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * @version		$Id: items.php 21006 2011-03-21 06:20:03Z infograf768 $
+ * @version		$Id$
  * @copyright	Copyright (C) 2005 - 2011 Open Source Matters, Inc. All rights reserved.
  * @license		GNU General Public License version 2 or later; see LICENSE.txt
  */
@@ -45,6 +45,9 @@ class MenusModelItems extends JModelList
 				'client_id', 'a.client_id',
 				'home', 'a.home',
 			);
+			if (JFactory::getApplication()->get('menu_associations', 0)) {
+				$config['filter_fields'][] = 'association';
+			}
 		}
 
 		parent::__construct($config);
@@ -76,6 +79,15 @@ class MenusModelItems extends JModelList
 
 		$level = $this->getUserStateFromRequest($this->context.'.filter.level', 'filter_level', 0, 'int');
 		$this->setState('filter.level', $level);
+		
+		$clientId = $this->getUserStateFromRequest($this->context.'.filter.client_id', 'filter_client_id', 0, 'int', false);
+		$previousId = $app->getUserState($this->context.'.filter.client_id_previous', null);
+		if($previousId != $clientId || $previousId === null){
+			$this->getUserStateFromRequest($this->context.'.filter.client_id_previous', 'filter_client_id_previous', 0, 'int', true);
+			$app->setUserState($this->context.'.filter.client_id_previous', $clientId);
+			JRequest::setVar('menutype',null);
+		}
+		$this->setState('filter.client_id', $clientId);
 
 		$menuType = JRequest::getVar('menutype',null);
 		if ($menuType) {
@@ -85,17 +97,21 @@ class MenusModelItems extends JModelList
 			}
 		}
 		else {
-			$menuType = $app->getUserState($this->context.'.filter.menutype');
-
-			if (!$menuType) {
-				$menuType = $this->getDefaultMenuType();
-			}
+				$menuType = MenusHelper::getMenutypes($clientId);
+				if(isset($menuType[0])) {
+					$menuType = (string)$menuType[0]->value;
+				} else {
+					$menuType = null;
+				}
+				$app->setUserState($this->context.'.filter.menutype', $menuType);
 		}
 
 		$this->setState('filter.menutype', $menuType);
 
 		$language = $this->getUserStateFromRequest($this->context.'.filter.language', 'filter_language', '');
 		$this->setState('filter.language', $language);
+		
+
 
 		// Component parameters.
 		$params	= JComponentHelper::getParams('com_menus');
@@ -160,8 +176,10 @@ class MenusModelItems extends JModelList
 	protected function getListQuery()
 	{
 		// Create a new query object.
-		$db = $this->getDbo();
-		$query = $db->getQuery(true);
+		$db		= $this->getDbo();
+		$query	= $db->getQuery(true);
+		$user	= JFactory::getUser();
+		$app	= JFactory::getApplication();
 
 		// Select all fields from the table.
 		$query->select($this->getState('list.select', 'a.*'));
@@ -183,9 +201,17 @@ class MenusModelItems extends JModelList
 		$query->select('ag.title AS access_level');
 		$query->join('LEFT', '#__viewlevels AS ag ON ag.id = a.access');
 
+		// Join over the associations.
+		if ($app->get('menu_associations', 0)) {
+			$query->select('COUNT(asso2.id)>1 as association');
+			$query->join('LEFT', '#__associations AS asso ON asso.id = a.id AND asso.context='.$db->quote('com_menus.item'));
+			$query->join('LEFT', '#__associations AS asso2 ON asso2.key = asso.key');
+			$query->group('a.id');
+		}
+
 		// Exclude the root category.
 		$query->where('a.id > 1');
-		$query->where('a.client_id = 0');
+		$query->where('a.client_id = '.(int)$db->getEscaped($this->getState('filter.client_id', 0)) );
 
 		// Filter on the published state.
 		$published = $this->getState('filter.published');
@@ -225,6 +251,13 @@ class MenusModelItems extends JModelList
 		// Filter on the access level.
 		if ($access = $this->getState('filter.access')) {
 			$query->where('a.access = '.(int) $access);
+		}
+
+		// Implement View Level Access
+		if (!$user->authorise('core.admin'))
+		{
+		    $groups	= implode(',', $user->getAuthorisedViewLevels());
+			$query->where('a.access IN ('.$groups.')');
 		}
 
 		// Filter on the level.

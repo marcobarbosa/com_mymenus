@@ -1,6 +1,6 @@
 <?php
 /**
- * @version		$Id: edit.php 20196 2011-01-09 02:40:25Z ian $
+ * @version		$Id$
  * @package		Joomla.Administrator
  * @subpackage	com_menus
  * @copyright	Copyright (C) 2005 - 2011 Open Source Matters, Inc. All rights reserved.
@@ -31,6 +31,8 @@ JHtml::_('behavior.formvalidation');
 	<fieldset class="adminform">
 		<legend><?php echo JText::_('COM_MENUS_MENU_DETAILS');?></legend>
 			<ul class="adminformlist">
+				<li><?php echo $this->form->getLabel('client_id'); ?>
+				<?php echo $this->form->getInput('client_id'); ?></li>
 				<li><?php echo $this->form->getLabel('title'); ?>
 				<?php echo $this->form->getInput('title'); ?></li>
 
